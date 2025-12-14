@@ -1,0 +1,5 @@
+ansible_user: administrator
+ansible_password: Cisco123!
+
+ansible_connection: ssh
+ansible_port: 22

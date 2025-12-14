@@ -1,0 +1,93 @@
+windows:
+  children:
+    headquarters_win:
+    suboffice_win:
+    branch_win:
+
+linux:
+  children:
+    headquarters_linux:
+    suboffice_linux:
+    branch_linux:
+
+headquarters:
+  children:
+    headquarters_win:
+    headquarters_linux:
+
+suboffice:
+  children:
+    suboffice_win:
+    suboffice_linux:
+
+branch:
+  children:
+    branch_win:
+    branch_linux:
+
+headquarters_win:
+  hosts:
+    ### Management ###
+    hq-mgmt-paw:
+      ansible_host: 10.10.10.50
+    ### Core ###
+    hq-core-dc1:
+      ansible_host: 10.10.20.10
+    hq-core-subca:
+      ansible_host: 10.10.20.11
+    hq-core-rootca:
+      ansible_host: 10.10.20.50
+    hq-core-ipam:
+      ansible_host: 10.10.20.51
+    hq-core-jump:
+      ansible_host: 10.10.20.52
+    # RDS
+    hq-rds-host1:
+      ansible_host: 10.10.30.10
+    hq-rds-broker:
+      ansible_host: 10.10.30.50
+    ### Clients ###
+    hq-client-01:
+      ansible_host: 10.10.100.100
+    hq-client-02:
+      ansible_host: 10.10.100.101
+
+headquarters_linux:
+  hosts:
+    ### Management ###
+    hq-mgmt-ansible:
+      ansible_host: 10.10.10.10
+    hq-mgmt-mon:
+      ansible_host: 10.10.10.11 # Prometheus/Grafana
+    hq-mgmt-ids:
+      ansible_host: 10.10.10.51 # Snort
+    hq-mgmt-pentest:
+      ansible_host: 10.10.10.52 # Metasploit
+    ### DMZ ###
+    hq-dmz-vpn:
+      ansible_host: 10.10.50.10
+    hq-dmz-dns:
+      ansible_host: 10.10.50.11
+    hq-dmz-mail:
+      ansible_host: 10.10.50.12
+    hq-dmz-web:
+      ansible_host: 10.10.50.50
+
+suboffice_win:
+  hosts:
+    sub-core-dc1:
+      ansible_host: 10.20.20.10
+    sub-core-dhcp:
+      ansible_host: 10.20.20.11
+
+suboffice_linux:
+  hosts:
+    sub-core-files:
+      ansible_host: 10.20.20.50 # Samba
+
+branch_win:
+  hosts:
+    br-core-rodc:
+      ansible_host: 10.30.10.10
+    br-core-client:
+      ansible_host: 10.30.10.20
