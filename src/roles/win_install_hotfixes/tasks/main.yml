@@ -1,0 +1,25 @@
+- name: Create temporary folder
+  ansible.windows.win_file:
+    path: C:\Temp
+    state: directory
+
+- name: Download KB3172729 for Server 2012 R2
+  win_get_url:
+    url: http://download.windowsupdate.com/d/msdownload/update/software/secu/2016/07/windows8.1-kb3172729-x64_e8003822a7ef4705cbb65623b72fd3cec73fe222.msu
+    dest: C:\Temp\KB3172729.msu
+
+- name: Install hotfix
+  win_hotfix:
+    hotfix_kb: KB3172729
+    source: C:\Temp\KB3172729.msu
+    state: present
+  register: hotfix_result
+
+- name: Reboot host if required
+  win_reboot:
+  when: hotfix_result.reboot_required
+
+- name: Remove temporary folder
+  ansible.windows.win_file:
+    path: C:\Temp
+    state: absent

@@ -1,0 +1,9 @@
+---
+- name: Set Computer Name
+  ansible.windows.win_hostname:
+    name: "{{ inventory_hostname }}"
+  register: hostname_result
+
+- name: Reboot if Hostname Changed
+  ansible.windows.win_reboot:
+  when: hostname_result.reboot_required

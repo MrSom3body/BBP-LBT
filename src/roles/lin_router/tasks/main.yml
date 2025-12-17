@@ -1,0 +1,15 @@
+- name: Enable IPv4 Forwarding
+  ansible.posix.sysctl:
+    name: net.ipv4.ip_forward
+    value: "1"
+    sysctl_set: yes
+    state: present
+    reload: yes
+
+- name: Enable Masquerading (NAT)
+  ansible.posix.firewalld:
+    zone: external
+    masquerade: yes
+    permanent: yes
+    state: enabled
+    immediate: yes

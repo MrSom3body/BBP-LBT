@@ -1,0 +1,8 @@
+- name: Install Critical and Security Updates
+  ansible.windows.win_updates:
+    category_names:
+      - SecurityUpdates
+      - CriticalUpdates
+    state: installed
+    reboot: true
+  register: update_result
