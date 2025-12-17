@@ -1,0 +1,23 @@
+acl "trusted" {
+    127.0.0.0/8;
+    {{ network_id }}.0/24;
+};
+
+options {
+    directory       "/var/named";
+    listen-on port 53 { 127.0.0.1; {{ server_ip }}; };
+    listen-on-v6 port 53 { ::1; };
+    allow-query     { trusted; };
+    forwarders { 9.9.9.9; };
+    dnssec-validation yes;
+};
+
+zone "{{ domain_name }}" IN {
+    type master;
+    file "zones/db.{{ domain_name }}";
+};
+
+zone "{{ reverse_network_id }}.in-addr.arpa" IN {
+    type master;
+    file "zones/db.{{ network_id }}";
+};

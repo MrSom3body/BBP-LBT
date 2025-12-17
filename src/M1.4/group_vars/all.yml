@@ -1,0 +1,14 @@
+domain_name: "sndh.dev"
+network_id: "10.187.0"
+reverse_network_id: "0.187.10"
+subnet_mask: "24"
+
+router_wan_if: "ens33"
+router_lan_if: "ens36"
+router_lan_ip: "10.187.0.254"
+
+router_ip: "10.187.0.254"
+server_ip: "10.187.0.100"
+client_ip: "10.187.0.10"
+
+public_dns: "9.9.9.9"

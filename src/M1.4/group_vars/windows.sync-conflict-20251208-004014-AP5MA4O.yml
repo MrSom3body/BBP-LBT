@@ -1,0 +1,8 @@
+ansible_user: Administrator
+ansible_password: Cisco123!
+ansible_connection: psrp
+ansible_port: 5985
+
+ansible_psrp_auth: negotiate
+ansible_psrp_scheme: http
+# ansible_psrp_server_cert_validation: ignore

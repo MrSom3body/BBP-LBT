@@ -1,0 +1,173 @@
+---
+- name: Bootstrap Network for Package Installation
+  hosts: services, clients
+  become: true
+  tasks:
+    - name: Temporarily set External DNS
+      community.general.nmcli:
+        conn_name: ens33
+        type: ethernet
+        dns4: "{{ public_dns }}"
+        state: present
+
+- name: Configure Router
+  hosts: lin-router
+  become: true
+  tasks:
+    - name: Enable IPv4 Forwarding
+      ansible.posix.sysctl:
+        name: net.ipv4.ip_forward
+        value: "1"
+        sysctl_set: yes
+        state: present
+        reload: yes
+
+    - name: Enable Masquerading (NAT)
+      ansible.posix.firewalld:
+        zone: external
+        masquerade: yes
+        permanent: yes
+        state: enabled
+        immediate: yes
+
+    - name: Configure WAN (ens33) as DHCP Client
+      community.general.nmcli:
+        conn_name: wan
+        ifname: ens33
+        type: ethernet
+        method4: auto
+        zone: external
+        autoconnect: yes
+        state: present
+
+    - name: Configure LAN (ens36) as Static Gateway
+      community.general.nmcli:
+        conn_name: lan
+        ifname: ens36
+        type: ethernet
+        ip4: "{{ router_lan_ip }}/24"
+        method4: manual
+        never_default4: yes
+        zone: trusted
+        autoconnect: yes
+        state: present
+
+    - name: Restart Network Manager
+      ansible.builtin.service:
+        name: NetworkManager
+        state: restarted
+
+- name: Configure DNS & DHCP Services
+  hosts: services
+  become: true
+
+  tasks:
+    - name: Install Bind9
+      ansible.builtin.dnf:
+        name:
+          - bind
+          - bind-utils
+        state: present
+
+    - name: Configure named.conf
+      ansible.builtin.template:
+        src: templates/named.conf.j2
+        dest: /etc/named.conf
+        owner: root
+        group: named
+        mode: "0640"
+      notify: Restart Named
+
+    - name: Create Zone Directory
+      ansible.builtin.file:
+        path: /var/named/zones
+        state: directory
+        owner: named
+        group: named
+        mode: "0750"
+
+    - name: Create Forward Zone File
+      ansible.builtin.template:
+        src: templates/db.forward.j2
+        dest: "/var/named/zones/db.{{ domain_name }}"
+        owner: named
+        group: named
+        mode: "0640"
+      notify: Restart Named
+
+    - name: Create Reverse Zone File
+      ansible.builtin.template:
+        src: templates/db.reverse.j2
+        dest: "/var/named/zones/db.{{ network_id }}"
+        owner: named
+        group: named
+        mode: "0640"
+      notify: Restart Named
+
+    - name: Install Kea
+      ansible.builtin.dnf:
+        name: kea
+        state: present
+
+    - name: Configure Kea DHCP
+      ansible.builtin.template:
+        src: templates/kea-dhcp4.conf.j2
+        dest: /etc/kea/kea-dhcp4.conf
+        backup: yes
+      notify: Restart Kea
+
+    - name: Open Firewall Ports (DNS/DHCP)
+      ansible.posix.firewalld:
+        service: "{{ item }}"
+        permanent: yes
+        state: enabled
+        immediate: yes
+      loop: [dns, dhcp]
+
+  handlers:
+    - name: Restart Named
+      ansible.builtin.service:
+        name: named
+        state: restarted
+        enabled: yes
+
+    - name: Restart Kea
+      ansible.builtin.service:
+        name: kea-dhcp4
+        state: restarted
+        enabled: yes
+
+- name: Finalize Server Network Configuration
+  hosts: services
+  become: true
+  tasks:
+    - name: Point Server DNS to Localhost (Final State)
+      community.general.nmcli:
+        conn_name: ens33
+        type: ethernet
+        gw4: "{{ router_lan_ip }}"
+        dns4: "127.0.0.1"
+        state: present
+
+    - name: Restart Network Manager (Async)
+      ansible.builtin.service:
+        name: NetworkManager
+        state: restarted
+      async: 45
+      poll: 0
+
+- name: Configure Clients
+  hosts: clients
+  become: true
+  tasks:
+    - name: Set Interface to Auto (DHCP)
+      community.general.nmcli:
+        conn_name: ens33
+        method4: auto
+        dns4: []
+        state: present
+
+    - name: Restart Network Manager
+      ansible.builtin.service:
+        name: NetworkManager
+        state: restarted

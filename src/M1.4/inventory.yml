@@ -1,0 +1,20 @@
+routers:
+  hosts:
+    lin-router:
+      ansible_host: 10.187.0.254
+
+services:
+  hosts:
+    lin-server:
+      ansible_host: 10.187.0.100
+
+clients:
+  hosts:
+    lin-client:
+      ansible_host: 10.187.0.10
+
+linux_systems:
+  children:
+    routers:
+    services:
+    clients:

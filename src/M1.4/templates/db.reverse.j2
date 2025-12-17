@@ -1,0 +1,13 @@
+$TTL    1h
+@       IN      SOA     lin-server.{{ domain_name }}. hostmaster.{{ domain_name }}. (
+                        1        ; Serial
+                        3h       ; Refresh
+                        1h       ; Retry
+                        1w       ; Expire
+                        1h )     ; Negative Cache TTL
+
+        IN      NS      lin-server.{{ domain_name }}.
+
+100     IN      PTR     lin-server.{{ domain_name }}.
+254     IN      PTR     lin-router.{{ domain_name }}.
+10      IN      PTR     lin-client.{{ domain_name }}.
