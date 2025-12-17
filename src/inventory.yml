@@ -10,6 +10,12 @@ linux:
     suboffice_linux:
     branch_linux:
 
+router:
+  hosts:
+    hq-router:
+    sub-router:
+    br-router:
+
 headquarters:
   children:
     headquarters_win:
@@ -54,6 +60,8 @@ headquarters_win:
 
 headquarters_linux:
   hosts:
+    hq-router:
+      ansible_host: 10.187.0.10
     ### Management ###
     hq-mgmt-ansible:
       ansible_host: 10.10.10.10
@@ -82,6 +90,8 @@ suboffice_win:
 
 suboffice_linux:
   hosts:
+    sub-router:
+      ansible_host: 10.187.0.20
     sub-core-files:
       ansible_host: 10.20.20.50 # Samba
 
@@ -91,3 +101,8 @@ branch_win:
       ansible_host: 10.30.10.10
     br-core-client:
       ansible_host: 10.30.10.20
+
+branch_lin:
+  hosts:
+    br-router:
+      ansible_host: 10.187.0.30
