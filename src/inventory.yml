@@ -33,30 +33,30 @@ branch:
 
 headquarters_win:
   hosts:
-    ### Management ###
-    hq-mgmt-paw:
-      ansible_host: 10.10.10.50
     ### Core ###
     hq-core-dc1:
-      ansible_host: 10.10.20.10
+      ansible_host: 10.10.10.10
     hq-core-subca:
-      ansible_host: 10.10.20.11
+      ansible_host: 10.10.10.11
     hq-core-rootca:
-      ansible_host: 10.10.20.50
+      ansible_host: 10.10.10.50
     hq-core-ipam:
-      ansible_host: 10.10.20.51
+      ansible_host: 10.10.10.51
     hq-core-jump:
-      ansible_host: 10.10.20.52
+      ansible_host: 10.10.10.52
     # RDS
-    hq-rds-host1:
-      ansible_host: 10.10.30.10
     hq-rds-broker:
-      ansible_host: 10.10.30.50
+      ansible_host: 10.10.10.53
+    hq-rds-host1:
+      ansible_host: 10.10.10.100
     ### Clients ###
     hq-client-01:
-      ansible_host: 10.10.100.100
+      ansible_host: 10.10.11.100
     hq-client-02:
-      ansible_host: 10.10.100.101
+      ansible_host: 10.10.11.101
+    ### Management ###
+    hq-mgmt-paw:
+      ansible_host: 10.10.50.50
 
 headquarters_linux:
   hosts:
@@ -64,36 +64,36 @@ headquarters_linux:
       ansible_host: 10.187.0.10
     ### Management ###
     hq-mgmt-ansible:
-      ansible_host: 10.10.10.10
+      ansible_host: 10.10.50.10
     hq-mgmt-mon:
-      ansible_host: 10.10.10.11 # Prometheus/Grafana
+      ansible_host: 10.10.50.11 # Prometheus/Grafana
     hq-mgmt-ids:
-      ansible_host: 10.10.10.51 # Snort
+      ansible_host: 10.10.50.51 # Snort
     hq-mgmt-pentest:
-      ansible_host: 10.10.10.52 # Metasploit
+      ansible_host: 10.10.50.52 # Metasploit
     ### DMZ ###
     hq-dmz-vpn:
-      ansible_host: 10.10.50.10
+      ansible_host: 10.10.200.10
     hq-dmz-dns:
-      ansible_host: 10.10.50.11
+      ansible_host: 10.10.200.11
     hq-dmz-mail:
-      ansible_host: 10.10.50.12
+      ansible_host: 10.10.200.12
     hq-dmz-web:
-      ansible_host: 10.10.50.50
+      ansible_host: 10.10.200.50
 
 suboffice_win:
   hosts:
     sub-core-dc1:
-      ansible_host: 10.20.20.10
+      ansible_host: 10.20.10.10
     sub-core-dhcp:
-      ansible_host: 10.20.20.11
+      ansible_host: 10.20.10.11
 
 suboffice_linux:
   hosts:
     sub-router:
       ansible_host: 10.187.0.20
     sub-core-files:
-      ansible_host: 10.20.20.50 # Samba
+      ansible_host: 10.20.10.50 # Samba
 
 branch_win:
   hosts:
