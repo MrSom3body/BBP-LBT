@@ -1,9 +1,7 @@
----
 - name: Set common configuration
   hosts:
     - hq-router
-    - hq-client-01
-    - hq-client-02
+    - sub-router
   roles:
     - common
 
@@ -59,57 +57,32 @@
         autoconnect: yes
         state: present
 
-- name: Configure DNS on Clients
+- name: Configure Suboffice Router
   hosts:
-    - hq-client-01
-    - hq-client-02
-  tasks:
-    - name: Configure DNS
-      ansible.windows.win_dns_client:
-        adapter_names: "*"
-        dns_servers:
-          - 9.9.9.9
-          - 1.1.1.1
-
-- name: Setup HQ Clients (Module 1.5)
-  hosts:
-    - hq-client-01
-    - hq-client-02
+    - sub-router
   roles:
-    - win_install_7zip
-    - win_install_updates
-    # - win_install_hotfixes # couldn't find any appropriate hotfix to use
+    - lin_router
+  become: true
   tasks:
-    - name: Create Avengers group
-      ansible.windows.win_group:
-        name: Avengers
-        description: "Du weißt doch eh wer sie sind"
+    - name: Configure WAN (ens33) as a DHCP Client
+      community.general.nmcli:
+        conn_name: WAN
+        ifname: ens33
+        type: ethernet
+        method4: manual
+        ip4: 10.187.0.20/24
+        gw4: 10.187.0.2
+        zone: external
+        autoconnect: yes
         state: present
-
-    - name: Create GrünerHulk user
-      ansible.windows.win_user:
-        name: GrünerHulk
-        password: JojoSchn!tz3l
-        state: present
-        groups:
-          - Users
-
-    - name: Add GrünerHulk to Avengers
-      ansible.windows.win_group_membership:
-        name: Avengers
-        members:
-          - GrünerHulk
-        state: present
-
-    - name: Create secrets folder
-      ansible.windows.win_file:
-        path: C:\Secrets
-        state: directory
-
-    - name: Add ACL to let Avengers access Secrets
-      ansible.windows.win_acl:
-        path: C:\Secrets
-        user: Avengers
-        rights: Modify
-        type: allow
+    - name: Configure LAN
+      community.general.nmcli:
+        conn_name: LAN
+        ifname: ens37
+        type: ethernet
+        method4: manual
+        ip4: 10.20.20.254/24
+        never_default4: yes
+        zone: trusted
+        autoconnect: yes
         state: present

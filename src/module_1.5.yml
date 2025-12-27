@@ -1,0 +1,57 @@
+- name: Configure DNS on Clients
+  hosts:
+    - hq-client-01
+    - hq-client-02
+  tasks:
+    - name: Configure DNS
+      ansible.windows.win_dns_client:
+        adapter_names: "*"
+        dns_servers:
+          - 9.9.9.9
+          - 1.1.1.1
+
+- name: Setup HQ Clients (Module 1.5)
+  hosts:
+    - hq-client-01
+    - hq-client-02
+  roles:
+    - win_install_7zip
+    - win_install_updates
+    # - win_install_hotfixes # couldn't find any appropriate hotfix to use
+  tasks:
+    - name: Create Avengers group
+      ansible.windows.win_group:
+        name: Avengers
+        description: "Du weißt doch eh wer sie sind"
+        state: present
+
+    - name: Create GrünerHulk user
+      ansible.windows.win_user:
+        name: GrünerHulk
+        password: JojoSchn!tz3l
+        state: present
+        groups:
+          - Users
+
+    - name: Add GrünerHulk to Avengers
+      ansible.windows.win_group_membership:
+        name: Avengers
+        members:
+          - GrünerHulk
+        state: present
+
+    - name: Create secrets folder
+      ansible.windows.win_file:
+        path: C:\Secrets
+        state: directory
+
+    - name: Add ACL to let Avengers access Secrets
+      ansible.windows.win_acl:
+        path: C:\Secrets
+        user: Avengers
+        rights: Modify
+        type: allow
+        state: present
+
+---
+# Suboffice
