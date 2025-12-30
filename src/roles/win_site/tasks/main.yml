@@ -1,0 +1,79 @@
+- name: Ensure AD Site exists
+  ansible.windows.win_powershell:
+    error_action: stop
+    parameters:
+      SiteName: "{{ ad_site_name }}"
+    script: |
+      param([string]$SiteName)
+
+      $changeOccurred = $false
+
+      if (-not (Get-ADReplicationSite -Filter {Name -eq $SiteName})) {
+        New-ADReplicationSite -Name $SiteName
+        $changeOccurred = $true
+      }
+
+      $Ansible.Changed = $changeOccurred
+
+- name: Ensure Subnets are assigned to AD Site
+  when: ad_site_subnets is defined and (ad_site_subnets | length > 0)
+  ansible.windows.win_powershell:
+    error_action: stop
+    parameters:
+      SiteName: "{{ ad_site_name }}"
+      Subnets: "{{ ad_site_subnets }}"
+    script: |
+      param(
+        [string]$SiteName,
+        [string[]]$Subnets
+      )
+
+      $changeOccurred = $false
+
+      foreach ($cidr in $Subnets) {
+        $subnetObj = Get-ADReplicationSubnet -Filter {Name -eq $cidr} -Properties Site
+
+        if (-not $subnetObj) {
+          New-ADReplicationSubnet -Name $cidr -Site $SiteName
+          $changeOccurred = $true
+          continue
+        }
+
+        $currentSiteName = ""
+        if ($subnetObj.Site) {
+          $currentSiteName = ($subnetObj.Site -split ",")[0] -replace "CN=",""
+        }
+
+        if ($currentSiteName -ne $SiteName) {
+          Set-ADReplicationSubnet -Identity $cidr -Site $SiteName
+          $changeOccurred = $true
+        }
+      }
+
+      $Ansible.Changed = $changeOccurred
+
+- name: Ensure Domain Controllers are in the correct AD Site
+  when: ad_site_dcs is defined and (ad_site_dcs | length > 0)
+  ansible.windows.win_powershell:
+    error_action: stop
+    parameters:
+      SiteName: "{{ ad_site_name }}"
+      DomainControllers: "{{ ad_site_dcs }}"
+    script: |
+      param(
+        [string]$SiteName,
+        [string[]]$DomainControllers
+      )
+
+      $changeOccurred = $false
+
+      foreach ($dcName in $DomainControllers) {
+        $dcObj = Get-ADDomainController -Identity $dcName -ErrorAction Stop
+
+        if ($dcObj.Site -ne $SiteName) {
+            Move-ADDirectoryServer -Identity $dcName -Site $SiteName
+            $changeOccurred = $true
+        }
+      }
+
+      $Ansible.Changed = $changeOccurred
