@@ -8,8 +8,4 @@
     dns_domain_name: "{{ domain_name }}"
     safe_mode_password: "{{ safe_mode_password }}"
     domain_netbios_name: "{{ netbios_name }}"
-  register: promotion_result
-
-- name: Reboot if required
-  ansible.windows.win_reboot:
-  when: promotion_result.reboot_required
+    reboot: true
