@@ -1,0 +1,51 @@
+- name: Ensure AD Site Links are configured correctly
+  ansible.windows.win_powershell:
+    error_action: stop
+    parameters:
+      SiteLinks: "{{ ad_site_links }}"
+    script: |
+      param(
+        [array]$SiteLinks
+      )
+
+      $changeOccurred = $false
+
+      foreach ($item in $SiteLinks) {
+          $linkName = $item.name
+          $targetSites = $item.sites | Sort-Object
+          $targetCost = $item.cost
+          $targetFreq = $item.frequency
+
+          $existingLink = Get-ADReplicationSiteLink -Filter {Name -eq $linkName} -Properties Cost, ReplicationFrequencyInMinutes, SitesIncluded
+
+          # Create new
+          if (-not $existingLink) {
+              New-ADReplicationSiteLink -Name $linkName -SitesIncluded $targetSites -Cost $targetCost -ReplicationFrequencyInMinutes $targetFreq
+              $changeOccurred = $true
+              continue
+          }
+
+          # Update old
+          if ($targetCost -and ($existingLink.Cost -ne $targetCost)) {
+              Set-ADReplicationSiteLink -Identity $linkName -Cost $targetCost
+              $changeOccurred = $true
+          }
+
+          if ($targetFreq -and ($existingLink.ReplicationFrequencyInMinutes -ne $targetFreq)) {
+              Set-ADReplicationSiteLink -Identity $linkName -ReplicationFrequencyInMinutes $targetFreq
+              $changeOccurred = $true
+          }
+
+          $currentSites = $existingLink.SitesIncluded | ForEach-Object {
+              ($_ -split ",")[0] -replace "CN=",""
+          } | Sort-Object
+
+          $diff = Compare-Object -ReferenceObject $currentSites -DifferenceObject $targetSites
+
+          if ($diff) {
+              Set-ADReplicationSiteLink -Identity $linkName -SitesIncluded $targetSites
+              $changeOccurred = $true
+          }
+      }
+
+      $Ansible.Changed = $changeOccurred
