@@ -1,0 +1,15 @@
+- name: Install AD-Domain-Services
+  ansible.windows.win_feature:
+    name: AD-Domain-Services
+    include_management_tools: yes
+
+- name: Join Domain
+  microsoft.ad.domain_controller:
+    dns_domain_name: "{{ domain_name }}"
+    domain_admin_user: "{{ ansible_user }}@{{ domain_name }}"
+    domain_admin_password: "{{ ansible_password }}"
+    safe_mode_password: "{{ safe_mode_password }}"
+    site_name: "{{ ad_site_name }}"
+    state: "domain_controller"
+    read_only: "{{ rodc | default(false) }}"
+    reboot: true
