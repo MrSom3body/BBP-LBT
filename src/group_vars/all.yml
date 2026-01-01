@@ -1,2 +1,10 @@
 domain_name: corp.sndh.dev
-subdomain_name: sub.sndh.dev
+safe_mode_password: SuperSecurePass123!
+netbios_name: LBT
+
+hq_site_name: Headquarters
+hq_subnet: 10.10.0.0/16
+sub_site_name: Suboffice
+sub_subnet: 10.20.0.0/16
+br_site_name: Branch
+br_subnet: 10.30.0.0/16
