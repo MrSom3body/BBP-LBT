@@ -1,7 +1,9 @@
 - name: Set common configuration
   hosts:
     - hq-router
-    - sub-router
+    - hq-core-dc1
+    - br-router
+    - br-core-rodc
   roles:
     - common
 
@@ -20,6 +22,9 @@
         method4: manual
         ip4: 10.187.0.10/24
         gw4: 10.187.0.2
+        routes4:
+          - 10.20.0.0/16 10.187.0.20
+          - 10.30.0.0/16 10.187.0.30
         zone: external
         autoconnect: yes
         state: present
@@ -34,10 +39,21 @@
         zone: trusted
         autoconnect: yes
         state: present
+    - name: Configure Client LAN
+      community.general.nmcli:
+        conn_name: Client LAN
+        ifname: ens38
+        type: ethernet
+        method4: manual
+        ip4: 10.10.11.254/24
+        never_default4: yes
+        zone: trusted
+        autoconnect: yes
+        state: present
     - name: Configure Management LAN
       community.general.nmcli:
         conn_name: Management LAN
-        ifname: ens38
+        ifname: ens39
         type: ethernet
         method4: manual
         ip4: 10.10.50.254/24
@@ -45,21 +61,29 @@
         zone: trusted
         autoconnect: yes
         state: present
-    - name: Configure Client LAN
+    - name: Configure DMZ LAN
       community.general.nmcli:
-        conn_name: Client LAN
-        ifname: ens39
+        conn_name: DMZ LAN
+        ifname: ens40
         type: ethernet
         method4: manual
-        ip4: 10.10.100.254/24
+        ip4: 10.10.200.254/24
         never_default4: yes
         zone: trusted
         autoconnect: yes
         state: present
 
-- name: Configure Suboffice Router
+    - name: Allow traffic from 10.30.0.0/16
+      ansible.posix.firewalld:
+        zone: trusted
+        source: 10.30.0.0/16
+        state: enabled
+        permanent: yes
+        immediate: yes
+
+- name: Configure Branch Router
   hosts:
-    - sub-router
+    - br-router
   roles:
     - lin_router
   become: true
@@ -70,8 +94,11 @@
         ifname: ens33
         type: ethernet
         method4: manual
-        ip4: 10.187.0.20/24
+        ip4: 10.187.0.30/24
         gw4: 10.187.0.2
+        routes4:
+          - 10.10.0.0/16 10.187.0.10
+          - 10.20.0.0/16 10.187.0.20
         zone: external
         autoconnect: yes
         state: present
@@ -81,8 +108,57 @@
         ifname: ens37
         type: ethernet
         method4: manual
-        ip4: 10.20.20.254/24
+        ip4: 10.30.10.254/24
         never_default4: yes
         zone: trusted
         autoconnect: yes
         state: present
+
+    - name: Allow traffic from 10.10.0.0/16
+      ansible.posix.firewalld:
+        zone: trusted
+        source: 10.10.0.0/16
+        state: enabled
+        permanent: yes
+        immediate: yes
+
+- name: Setup HQ DC
+  # vars are inherited from group_vars/all.yml btw
+  hosts:
+    - hq-core-dc1
+  roles:
+    - win_domain_root
+    - win_site_rename
+    - win_site
+    - win_site_link
+  vars:
+    ad_site_renames:
+      - old_name: "Default-First-Site-Name"
+        new_name: "Headquarters"
+    ad_sites:
+      - name: "Headquarters"
+        dcs: ["hq-core-dc1"]
+      - name: "Branch"
+        subnets: ["10.30.10.0/24"]
+    ad_site_links:
+      - name: "Link-HQ-Branch"
+        sites:
+          - "Headquarters"
+          - "Branch"
+        cost: 50
+        frequency: 180
+
+- name: Setup Branch DC
+  hosts:
+    - br-core-rodc
+  roles:
+    - win_domain_join
+  vars:
+    ad_site_name: "Branch"
+    rodc: true
+  pre_tasks:
+    - name: Configure DNS
+      ansible.windows.win_dns_client:
+        adapter_names: "*"
+        dns_servers:
+          - 10.10.10.10
