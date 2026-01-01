@@ -1,16 +1,8 @@
-- name: Set common configuration
-  hosts:
-    - hq-router
-    - hq-core-dc1
-    - br-router
-    - br-core-rodc
-  roles:
-    - common
-
 - name: Configure HQ Router
   hosts:
     - hq-router
   roles:
+    - common
     - lin_router
   become: true
   tasks:
@@ -28,6 +20,7 @@
         zone: external
         autoconnect: yes
         state: present
+      notify: Restart NetworkManager
     - name: Configure Core LAN
       community.general.nmcli:
         conn_name: Core LAN
@@ -39,6 +32,7 @@
         zone: trusted
         autoconnect: yes
         state: present
+      notify: Restart NetworkManager
     - name: Configure Client LAN
       community.general.nmcli:
         conn_name: Client LAN
@@ -50,6 +44,7 @@
         zone: trusted
         autoconnect: yes
         state: present
+      notify: Restart NetworkManager
     - name: Configure Management LAN
       community.general.nmcli:
         conn_name: Management LAN
@@ -61,6 +56,7 @@
         zone: trusted
         autoconnect: yes
         state: present
+      notify: Restart NetworkManager
     - name: Configure DMZ LAN
       community.general.nmcli:
         conn_name: DMZ LAN
@@ -72,6 +68,7 @@
         zone: trusted
         autoconnect: yes
         state: present
+      notify: Restart NetworkManager
 
     - name: Allow traffic from 10.20.0.0/16
       ansible.posix.firewalld:
@@ -92,6 +89,7 @@
   hosts:
     - br-router
   roles:
+    - common
     - lin_router
   become: true
   tasks:
@@ -109,6 +107,7 @@
         zone: external
         autoconnect: yes
         state: present
+      notify: Restart NetworkManager
     - name: Configure LAN
       community.general.nmcli:
         conn_name: LAN
@@ -120,6 +119,7 @@
         zone: trusted
         autoconnect: yes
         state: present
+      notify: Restart NetworkManager
 
     - name: Allow traffic from 10.10.0.0/16
       ansible.posix.firewalld:
@@ -141,6 +141,7 @@
   hosts:
     - hq-core-dc1
   roles:
+    - common
     - win_domain_root
     - win_site_rename
     - win_site
@@ -166,10 +167,11 @@
   hosts:
     - br-core-rodc
   roles:
+    - common
     - win_domain_join
   vars:
     ad_site_name: "Branch"
-    rodc: true
+    # rodc: true
   pre_tasks:
     - name: Configure DNS
       ansible.windows.win_dns_client:
