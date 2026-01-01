@@ -73,6 +73,13 @@
         autoconnect: yes
         state: present
 
+    - name: Allow traffic from 10.20.0.0/16
+      ansible.posix.firewalld:
+        zone: trusted
+        source: 10.20.0.0/16
+        state: enabled
+        permanent: yes
+        immediate: yes
     - name: Allow traffic from 10.30.0.0/16
       ansible.posix.firewalld:
         zone: trusted
@@ -118,6 +125,13 @@
       ansible.posix.firewalld:
         zone: trusted
         source: 10.10.0.0/16
+        state: enabled
+        permanent: yes
+        immediate: yes
+    - name: Allow traffic from 10.20.0.0/16
+      ansible.posix.firewalld:
+        zone: trusted
+        source: 10.20.0.0/16
         state: enabled
         permanent: yes
         immediate: yes
