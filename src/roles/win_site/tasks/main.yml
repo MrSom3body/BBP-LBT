@@ -1,8 +1,11 @@
-- name: Ensure AD Site exists
+- name: Ensure AD Sites exist
+  loop: "{{ ad_sites }}"
+  loop_control:
+    label: "{{ item.name }}"
   ansible.windows.win_powershell:
     error_action: stop
     parameters:
-      SiteName: "{{ ad_site_name }}"
+      SiteName: "{{ item.name }}"
     script: |
       param([string]$SiteName)
 
@@ -15,13 +18,16 @@
 
       $Ansible.Changed = $changeOccurred
 
-- name: Ensure Subnets are assigned to AD Site
-  when: ad_site_subnets is defined and (ad_site_subnets | length > 0)
+- name: Ensure Subnets are assigned to AD Sites
+  loop: "{{ ad_sites }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when: item.subnets is defined and (item.subnets | length > 0)
   ansible.windows.win_powershell:
     error_action: stop
     parameters:
-      SiteName: "{{ ad_site_name }}"
-      Subnets: "{{ ad_site_subnets }}"
+      SiteName: "{{ item.name }}"
+      Subnets: "{{ item.subnets }}"
     script: |
       param(
         [string]$SiteName,
@@ -52,13 +58,16 @@
 
       $Ansible.Changed = $changeOccurred
 
-- name: Ensure Domain Controllers are in the correct AD Site
-  when: ad_site_dcs is defined and (ad_site_dcs | length > 0)
+- name: Ensure Domain Controllers are in the correct AD Sites
+  loop: "{{ ad_sites }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when: item.dcs is defined and (item.dcs | length > 0)
   ansible.windows.win_powershell:
     error_action: stop
     parameters:
-      SiteName: "{{ ad_site_name }}"
-      DomainControllers: "{{ ad_site_dcs }}"
+      SiteName: "{{ item.name }}"
+      DomainControllers: "{{ item.dcs }}"
     script: |
       param(
         [string]$SiteName,
@@ -68,7 +77,12 @@
       $changeOccurred = $false
 
       foreach ($dcName in $DomainControllers) {
-        $dcObj = Get-ADDomainController -Identity $dcName -ErrorAction Stop
+        try {
+            $dcObj = Get-ADDomainController -Identity $dcName -ErrorAction Stop
+        } catch {
+            Write-Warning "DC '$dcName' not found."
+            continue
+        }
 
         if ($dcObj.Site -ne $SiteName) {
             Move-ADDirectoryServer -Identity $dcName -Site $SiteName
