@@ -102,7 +102,7 @@ branch_win:
     br-core-client:
       ansible_host: 10.30.10.20
 
-branch_lin:
+branch_linux:
   hosts:
     br-router:
       ansible_host: 10.187.0.30
