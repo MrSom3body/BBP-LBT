@@ -1,0 +1,31 @@
+- name: Rename AD Sites if necessary
+  ansible.windows.win_powershell:
+    error_action: stop
+    parameters:
+      Renames: "{{ ad_site_renames }}"
+    script: |
+      param(
+        [array]$Renames
+      )
+
+      $changeOccurred = $false
+
+      foreach ($item in $Renames) {
+          $oldName = $item.old_name
+          $newName = $item.new_name
+
+          if (Get-ADReplicationSite -Filter {Name -eq $newName}) {
+              continue
+          }
+
+          $oldSiteObj = Get-ADReplicationSite -Filter {Name -eq $oldName}
+
+          if ($oldSiteObj) {
+              Rename-ADObject -Identity $oldSiteObj.DistinguishedName -NewName $newName
+              $changeOccurred = $true
+          } else {
+              Write-Verbose "Site '$oldName' to rename not found."
+          }
+      }
+
+      $Ansible.Changed = $changeOccurred
