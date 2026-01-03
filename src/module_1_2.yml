@@ -1,0 +1,86 @@
+- name: Configure Suboffice Router
+  hosts:
+    - sub-router
+  roles:
+    - common
+    - lin_router
+  become: true
+  tasks:
+    - name: Configure WAN (ens33) as a DHCP Client
+      community.general.nmcli:
+        conn_name: WAN
+        ifname: ens33
+        type: ethernet
+        method4: manual
+        ip4: 10.187.0.20/24
+        gw4: 10.187.0.2
+        routes4:
+          - 10.10.0.0/16 10.187.0.10
+          - 10.30.0.0/16 10.187.0.30
+        zone: external
+        autoconnect: yes
+        state: present
+      notify: Restart NetworkManager
+    - name: Configure LAN
+      community.general.nmcli:
+        conn_name: LAN
+        ifname: ens37
+        type: ethernet
+        method4: manual
+        ip4: 10.20.10.254/24
+        never_default4: yes
+        zone: trusted
+        autoconnect: yes
+        state: present
+      notify: Restart NetworkManager
+
+    - name: Allow traffic from 10.10.0.0/16
+      ansible.posix.firewalld:
+        zone: trusted
+        source: 10.10.0.0/16
+        state: enabled
+        permanent: yes
+        immediate: yes
+    - name: Allow traffic from 10.30.0.0/16
+      ansible.posix.firewalld:
+        zone: trusted
+        source: 10.30.0.0/16
+        state: enabled
+        permanent: yes
+        immediate: yes
+
+- name: Create Suboffice site
+  hosts:
+    - hq-core-dc1
+  roles:
+    - common
+    - win_site
+    - win_site_link
+  vars:
+    ad_sites:
+      - name: "Suboffice"
+        subnets: ["10.20.10.0/24"]
+    ad_site_links:
+      - name: "Link-HQ-Suboffice"
+        sites:
+          - "Headquarters"
+          - "Suboffice"
+        cost: 50
+        frequency: 180
+
+- name: Setup Suboffice DC
+  hosts:
+    - sub-core-dc1
+  roles:
+    - common
+    - win_domain_child
+  vars:
+    sub_domain_name: "sub.corp.sndh.dev"
+    ad_site_name: "Suboffice"
+  pre_tasks:
+    - name: Configure DNS
+      ansible.windows.win_dns_client:
+        adapter_names: "*"
+        ipv4_addresses:
+          - 10.10.10.10
+          - 127.0.0.1
