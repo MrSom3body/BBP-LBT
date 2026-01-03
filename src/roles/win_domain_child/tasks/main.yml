@@ -1,0 +1,13 @@
+- name: Install AD-Domain-Services
+  ansible.windows.win_feature:
+    name: AD-Domain-Services
+    include_management_tools: yes
+
+- name: Promote Subdomain Root
+  microsoft.ad.domain_child:
+    dns_domain_name: "{{ sub_domain_name }}"
+    domain_admin_user: "{{ ansible_user }}@{{ domain_name }}"
+    domain_admin_password: "{{ ansible_password }}"
+    safe_mode_password: "{{ safe_mode_password }}"
+    site_name: "{{ ad_site_name }}"
+    reboot: true
