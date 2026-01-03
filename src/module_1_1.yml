@@ -163,6 +163,16 @@
           - "Branch"
         cost: 50
         frequency: 180
+  tasks:
+    - name: Allow traffic from transport network
+      community.windows.win_firewall_rule:
+        name: Allow-LBT-Transport-Network
+        description: Allows the transport network to reach into the net for replication (should be disabled if a proper VPN is set up)
+        direction: in
+        action: allow
+        remoteip: 10.187.0.0/24
+        state: present
+        enabled: true
 
 - name: Setup Branch DC
   hosts:
@@ -172,10 +182,20 @@
     - win_domain_join
   vars:
     ad_site_name: "Branch"
-    # rodc: true
+    rodc: true
   pre_tasks:
     - name: Configure DNS
       ansible.windows.win_dns_client:
         adapter_names: "*"
         dns_servers:
           - 10.10.10.10
+  tasks:
+    - name: Allow traffic from transport network
+      community.windows.win_firewall_rule:
+        name: Allow-LBT-Transport-Network
+        description: Allows the transport network to reach into the net for replication (should be disabled if a proper VPN is set up)
+        direction: in
+        action: allow
+        remoteip: 10.187.0.0/24
+        state: present
+        enabled: true

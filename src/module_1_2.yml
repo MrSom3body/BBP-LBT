@@ -83,4 +83,13 @@
         adapter_names: "*"
         ipv4_addresses:
           - 10.10.10.10
-          - 127.0.0.1
+  tasks:
+    - name: Allow traffic from transport network
+      community.windows.win_firewall_rule:
+        name: Allow-LBT-Transport-Network
+        description: Allows the transport network to reach into the net for replication (should be disabled if a proper VPN is set up)
+        direction: in
+        action: allow
+        remoteip: 10.187.0.0/24
+        state: present
+        enabled: true
