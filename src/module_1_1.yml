@@ -162,7 +162,7 @@
           - "Headquarters"
           - "Branch"
         cost: 50
-        frequency: 180
+        frequency: 15
   tasks:
     - name: Allow traffic from transport network
       community.windows.win_firewall_rule:
