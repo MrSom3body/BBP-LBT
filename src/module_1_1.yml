@@ -152,6 +152,7 @@
         new_name: "Headquarters"
     ad_sites:
       - name: "Headquarters"
+        subnets: ["10.10.10.0/24"]
         dcs: ["hq-core-dc1"]
       - name: "Branch"
         subnets: ["10.30.10.0/24"]
