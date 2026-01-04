@@ -12,9 +12,16 @@
 - name: Setup HQ Clients (ad)
   hosts:
     - hq-client-01
+    - hq-client-02
   roles:
     - common
     - win_client_domain_join
+  pre_tasks:
+    - name: Configure DNS
+      ansible.windows.win_dns_client:
+        adapter_names: "*"
+        dns_servers:
+          - 10.10.10.10
   tasks:
     - name: Ensure Directory for Secrets exists
       ansible.windows.win_file:
@@ -68,12 +75,6 @@
     - win_install_7zip
     # - win_install_updates
     # - win_install_hotfixes # couldn't find any appropriate hotfix to use
-  pre_tasks:
-    - name: Configure DNS
-      ansible.windows.win_dns_client:
-        adapter_names: "*"
-        dns_servers:
-          - 10.10.10.10
   tasks:
     - name: Create Avengers group
       ansible.windows.win_group:
