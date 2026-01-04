@@ -1,23 +1,30 @@
-- name: Configure DNS on Clients
+- name: Add subnet to HQ
   hosts:
-    - hq-client-01
-    - hq-client-02
-  tasks:
-    - name: Configure DNS
-      ansible.windows.win_dns_client:
-        adapter_names: "*"
-        dns_servers:
-          - 9.9.9.9
-          - 1.1.1.1
+    - hq-core-dc1
+  roles:
+    - common
+    - win_site
+  vars:
+    ad_sites:
+      - name: "Headquarters"
+        subnets: ["10.10.11.0/24"]
 
-- name: Setup HQ Clients (Module 1.5)
+- name: Setup HQ Clients
   hosts:
     - hq-client-01
     - hq-client-02
   roles:
+    - common
+    - win_client_domain_join
     - win_install_7zip
     - win_install_updates
     # - win_install_hotfixes # couldn't find any appropriate hotfix to use
+  pre_tasks:
+    - name: Configure DNS
+      ansible.windows.win_dns_client:
+        adapter_names: "*"
+        dns_servers:
+          - 10.10.10.10
   tasks:
     - name: Create Avengers group
       ansible.windows.win_group:
