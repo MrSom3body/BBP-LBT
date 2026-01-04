@@ -49,7 +49,7 @@
         permanent: yes
         immediate: yes
 
-- name: Create Suboffice site
+- name: Setup HQ DC
   hosts:
     - hq-core-dc1
   roles:
@@ -67,6 +67,21 @@
           - "Suboffice"
         cost: 50
         frequency: 15
+  tasks:
+    - name: Create Domain Local Group 'DL_HQ-Restricted'
+      microsoft.ad.group:
+        name: DL_HQ-Restricted
+        scope: domainlocal
+        category: security
+        members:
+          add:
+            - name: GG_Sub-Admins
+              server: sub-core-dc1.sub.corp.sndh.dev
+        domain_credentials:
+          - name: sub-core-dc1.sub.corp.sndh.dev
+            username: "{{ ansible_user }}"
+            password: "{{ ansible_password }}"
+        state: present
 
 - name: Setup Suboffice DC
   hosts:
@@ -93,3 +108,24 @@
         remoteip: 10.187.0.0/24
         state: present
         enabled: true
+
+    - name: Create Global Group 'GG_Sub-Admins'
+      microsoft.ad.group:
+        name: GG_Sub-Admins
+        scope: global
+        category: security
+        protect_from_deletion: yes
+        state: present
+
+    - name: Create User 'SubAdmin'
+      microsoft.ad.user:
+        name: SubAdmin
+        firstname: Sub
+        surname: Admin
+        password: Cisco123!
+        state: present
+        enabled: yes
+        groups:
+          add:
+            - GG_Sub-Admins
+        upn: SubAdmin@sub.corp.sndh.dev # should be set to name@domain
