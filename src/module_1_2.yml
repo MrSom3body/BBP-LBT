@@ -67,21 +67,6 @@
           - "Suboffice"
         cost: 50
         frequency: 15
-  tasks:
-    - name: Create Domain Local Group 'DL_HQ-Restricted'
-      microsoft.ad.group:
-        name: DL_HQ-Restricted
-        scope: domainlocal
-        category: security
-        members:
-          add:
-            - name: GG_Sub-Admins
-              server: sub-core-dc1.sub.corp.sndh.dev
-        domain_credentials:
-          - name: sub-core-dc1.sub.corp.sndh.dev
-            username: "{{ ansible_user }}"
-            password: "{{ ansible_password }}"
-        state: present
 
 - name: Setup Suboffice DC
   hosts:
@@ -129,3 +114,24 @@
           add:
             - GG_Sub-Admins
         upn: SubAdmin@sub.corp.sndh.dev # should be set to name@domain
+
+- name: Create DL group in HQ
+  hosts:
+    - hq-core-dc1
+  roles:
+    - common
+  tasks:
+    - name: Create Domain Local Group 'DL_HQ-Restricted'
+      microsoft.ad.group:
+        name: DL_HQ-Restricted
+        scope: domainlocal
+        category: security
+        members:
+          add:
+            - name: GG_Sub-Admins
+              server: sub-core-dc1.sub.corp.sndh.dev
+        domain_credentials:
+          - name: sub-core-dc1.sub.corp.sndh.dev
+            username: "{{ ansible_user }}"
+            password: "{{ ansible_password }}"
+        state: present
