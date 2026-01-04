@@ -1,0 +1,7 @@
+- name: Join Domain {{ domain_name }}
+  microsoft.ad.membership:
+    dns_domain_name: "{{ domain_name }}"
+    domain_admin_user: "{{ ansible_user }}@{{ domain_name }}"
+    domain_admin_password: "{{ ansible_password }}"
+    state: domain
+    reboot: true
