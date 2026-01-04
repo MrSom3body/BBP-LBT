@@ -9,15 +9,64 @@
       - name: "Headquarters"
         subnets: ["10.10.11.0/24"]
 
-- name: Setup HQ Clients
+- name: Setup HQ Clients (ad)
+  hosts:
+    - hq-client-01
+  roles:
+    - common
+    - win_client_domain_join
+  tasks:
+    - name: Ensure Directory for Secrets exists
+      ansible.windows.win_file:
+        path: C:\HQ-Secret-Data
+        state: directory
+
+    - name: Assign NTFS Permissions
+      ansible.windows.win_acl:
+        path: C:\HQ-Secret-Data
+        user: DL_HQ-Restricted@corp.sndh.dev
+        rights: Modify
+        type: allow
+        state: present
+
+    - name: Disable Inheritance and Remove Inherited Permissions
+      ansible.windows.win_acl_inheritance:
+        path: C:\HQ-Secret-Data
+        state: absent
+        reorganize: no
+
+    - name: Grant System and Admin Full Control
+      ansible.windows.win_acl:
+        path: C:\HQ-Secret-Data
+        user: "{{ item }}"
+        rights: FullControl
+        type: allow
+        state: present
+      loop:
+        - "NT AUTHORITY\\SYSTEM"
+        - "BUILTIN\\Administrators"
+
+    - name: Grant DL Group Access
+      ansible.windows.win_acl:
+        path: C:\HQ-Secret-Data
+        user: DL_HQ-Restricted@corp.sndh.dev
+        rights: Modify
+        type: allow
+        state: present
+
+    - name: Create a Dummy File for Testing
+      ansible.windows.win_copy:
+        content: "TOP SECRET: Nur für Admins aus der Subdomain."
+        dest: C:\HQ-Secret-Data\Plans.txt
+
+- name: Setup HQ Clients (local)
   hosts:
     - hq-client-01
     - hq-client-02
   roles:
     - common
-    - win_client_domain_join
     - win_install_7zip
-    - win_install_updates
+    # - win_install_updates
     # - win_install_hotfixes # couldn't find any appropriate hotfix to use
   pre_tasks:
     - name: Configure DNS
