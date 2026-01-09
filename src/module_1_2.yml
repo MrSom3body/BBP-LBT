@@ -34,20 +34,14 @@
         state: present
       notify: Restart NetworkManager
 
-    - name: Allow traffic from 10.10.0.0/16
+    - name: Allow traffic to trusted
       ansible.posix.firewalld:
         zone: trusted
-        source: 10.10.0.0/16
+        source: "{{ item }}"
         state: enabled
         permanent: yes
         immediate: yes
-    - name: Allow traffic from 10.30.0.0/16
-      ansible.posix.firewalld:
-        zone: trusted
-        source: 10.30.0.0/16
-        state: enabled
-        permanent: yes
-        immediate: yes
+      loop: [10.10.0.0/16, 10.30.0.0/16]
 
 - name: Setup HQ DC
   hosts:
